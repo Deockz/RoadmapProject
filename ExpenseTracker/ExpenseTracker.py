@@ -6,11 +6,6 @@ import os.path
 csv_file_name = 'expensesDatabase.csv'
 current_time = datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')
 
-'''test_dir= [
-        {'id':1,'date':current_time,'description':'test value 1','amount':0},
-        {'id':2,'date':current_time,'description':'test value 2','amount':10},
-        {'id':3,'date':current_time,'description':'test value 3','amount':20}
-]'''
 
 #Fuction to parse arguments
 def parseArguments():
@@ -23,7 +18,7 @@ def parseArguments():
     args = parser.parse_args()    
     return args
 
-#Fuction to get csv data. If file do not exist call createDatase()
+#Fuction to get csv data. 
 def getExpenseData():
     try:
         with open(csv_file_name, encoding='utf-8') as expensesData:
@@ -31,38 +26,42 @@ def getExpenseData():
             return df
     except Exception as Error:
         if type(Error).__name__ == 'FileNotFoundError':
-            createDatabase()
+            print('File not Found')            
         else:
             print('An exception ocurr: ',Error,)
 
-#Fuction to update database or create empty database if not exist
+#Fuction to update database 
 def updateDatabase(data):
-    if os.path.isfile(csv_file_name):
-        df = pd.DataFrame(data)        
-        df.to_csv(csv_file_name,index=False) 
-    else:
-        empty_dataBase = {'expenses':[],'expenseID' : 0}
-        df = pd.DataFrame(empty_dataBase)        
-        df.to_csv(csv_file_name,index=False) 
-        print(f'DataBase do not exist. Empity database created with name: {csv_file_name}')
-
+    df = pd.DataFrame(data)        
+    df.to_csv(csv_file_name,index=False) 
+    
 #Add a new expense
 def addExpense(description,amount):
    data = getExpenseData()
    id = data.id.max() + 1
    data.loc[len(data.index)] = [id,current_time,description,amount]  
    updateDatabase(data)
-   print(f'Expenses added with id: {id}')
+   print(f'Expense added with id: {id}')
 
 def updateExpense(id, description,amount):
     df = getExpenseData()
-    print(df)
     row = df[df['id'] == id].index
-    df.loc[row,['description','amount']] = [description,amount]
-    updateDatabase(df)
+    if  df.loc[row,['description','amount']].empty:
+        print('Index not found')
+    else:
+        df.loc[row,['description','amount']] = [description,amount]
+        updateDatabase(df)
+        print(f'Expense with id {id} updated')
 
-def deleteExpense():
-    print('Expense deleted')
+def deleteExpense(index):
+    df = getExpenseData()
+    if index in df['id'].values:
+        df2 = df[df.id != index]
+        updateDatabase(df2)
+        print(f'Expense with id {index} deleted')
+    else:
+        print('Error. Expense ID not found')
+    
 
 def listExpense():
     print('Expenses: ')
@@ -71,20 +70,26 @@ def summaryExpense():
     print('This is the summary')
 
 def main ():
-    arguments = parseArguments()
-    if arguments.Action[0] == 'add':
-        addExpense(arguments.description,arguments.amount)
-    elif arguments.Action[0] == 'update':
-        updateExpense(arguments.id,arguments.description,arguments.amount)
-    elif arguments.Action[0] == 'delete':
-        deleteExpense()
-    elif arguments.Action[0] == 'list':
-        listExpense()
-    elif arguments.Action[0] == 'summary':
-        summaryExpense()
+    if os.path.isfile(csv_file_name):
+        arguments = parseArguments()
+        if arguments.Action[0] == 'add':
+            addExpense(arguments.description,arguments.amount)
+        elif arguments.Action[0] == 'update':
+            updateExpense(arguments.id,arguments.description,arguments.amount)
+        elif arguments.Action[0] == 'delete':
+            deleteExpense(arguments.id)
+        elif arguments.Action[0] == 'list':
+            listExpense()
+        elif arguments.Action[0] == 'summary':
+            summaryExpense()
+        else:
+            print('Command invalid')
     else:
-        print('Command invalid')
-    getExpenseData()
+        empty_dataBase = [{'id':0,'date':current_time,'description': 'DataBase Created','amount':0}]
+        df = pd.DataFrame(empty_dataBase)        
+        df.to_csv(csv_file_name,index=False) 
+        print(f'DataBase do not exist. Empity database created with name: {csv_file_name}')
+        print(df)
 
 
 if __name__ == '__main__':
