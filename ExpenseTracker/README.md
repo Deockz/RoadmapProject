@@ -31,7 +31,7 @@ python ExpenseTracker.py update --id 1 --description 'Expense Description' --amo
 ### Delete an expense
 Delete a expense. Inlude the expense id
 ```
-python ExpenseTracker.py update --id 1
+python ExpenseTracker.py delete --id 1
 ```
 
 ### Show all the expenses
