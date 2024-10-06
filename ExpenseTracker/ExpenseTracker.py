@@ -6,7 +6,6 @@ import os.path
 csv_file_name = 'expensesDatabase.csv'
 current_time = datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S')
 
-
 #Fuction to parse arguments
 def parseArguments():
     parser = argparse.ArgumentParser(description='Expense Tracker Program')
@@ -14,7 +13,7 @@ def parseArguments():
     parser.add_argument('--description', nargs='?',default='Expense',help='Description of Expense to be Added or Updated')
     parser.add_argument('--amount', type=int,nargs='?',default=0,help='Amount of Expense to Add or change')
     parser.add_argument('--id', type=int, nargs='?',default=1,help='Expense ID')
-    parser.add_argument('--month', nargs='?',default=1,help='Month to view on Summary')
+    parser.add_argument('--month',type=int, nargs='?',default=None,help='Month to view on Summary')
     args = parser.parse_args()    
     return args
 
@@ -43,6 +42,7 @@ def addExpense(description,amount):
    updateDatabase(data)
    print(f'Expense added with id: {id}')
 
+#Update de description and de amount of a expense
 def updateExpense(id, description,amount):
     df = getExpenseData()
     row = df[df['id'] == id].index
@@ -53,6 +53,7 @@ def updateExpense(id, description,amount):
         updateDatabase(df)
         print(f'Expense with id {id} updated')
 
+#Delete a row from de database
 def deleteExpense(index):
     df = getExpenseData()
     if index in df['id'].values:
@@ -62,13 +63,33 @@ def deleteExpense(index):
     else:
         print('Error. Expense ID not found')
     
-
+#Print the database
 def listExpense():
-    print('Expenses: ')
+    df = getExpenseData()
+    print(df)
 
-def summaryExpense():
-    print('This is the summary')
+#Print summary of all expenses or expeneses by month
+def summaryExpense(month):
+    df = getExpenseData()
+    try:
+        if month == None:
+            total_amount=0
+            for x in df['amount']:
+                total_amount+=x
+            print(total_amount)
+        else:
+            total_amount= 0
+            for i in range(0,len(df)):
+                expenseDate = df.iloc[[i]].date.values[0]             
+                date_mont = datetime.datetime.strptime(expenseDate, "%m/%d/%Y %H:%M:%S").month      
+                if date_mont == month:
+                    total_amount += df.iloc[[i]].amount.values[0]
+            month_name = datetime.datetime(1,month,12).strftime('%B')
+            print(f'Total amount of expenses in {month_name}: {total_amount}')
+    except ValueError as Error:
+        print('Month not in range. Use numbre between 1 - 12')
 
+#Main function
 def main ():
     if os.path.isfile(csv_file_name):
         arguments = parseArguments()
@@ -81,7 +102,7 @@ def main ():
         elif arguments.Action[0] == 'list':
             listExpense()
         elif arguments.Action[0] == 'summary':
-            summaryExpense()
+            summaryExpense(arguments.month)
         else:
             print('Command invalid')
     else:
